@@ -63,9 +63,9 @@ runcmd:
   - mkdir -p /opt/flask-app
   - cd /opt/flask-app
 
-  # Installer les dépendances Python
+  # Installer les dépendances Python (avec --ignore-installed pour éviter conflits)
   - pip3 install --upgrade pip
-  - pip3 install -r /opt/flask-app/requirements.txt
+  - pip3 install --ignore-installed -r /opt/flask-app/requirements.txt
 
   # Télécharger l'application Flask depuis GitHub (à adapter)
   # Alternative: copier le code directement ici
