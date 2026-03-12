@@ -51,18 +51,19 @@ output "blob_containers" {
   }
 }
 
-output "database_host" {
-  description = "PostgreSQL server hostname"
-  value       = azurerm_postgresql_flexible_server.main.fqdn
-}
-
-output "database_name" {
-  description = "PostgreSQL database name"
-  value       = azurerm_postgresql_flexible_server_database.main.name
-}
-
-output "database_connection_string" {
-  description = "PostgreSQL connection string"
-  value       = "postgresql://${var.db_admin_username}:${var.db_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.main.name}"
-  sensitive   = true
-}
+# PostgreSQL outputs désactivés
+# output "database_host" {
+#   description = "PostgreSQL server hostname"
+#   value       = azurerm_postgresql_flexible_server.main.fqdn
+# }
+#
+# output "database_name" {
+#   description = "PostgreSQL database name"
+#   value       = azurerm_postgresql_flexible_server_database.main.name
+# }
+#
+# output "database_connection_string" {
+#   description = "PostgreSQL connection string"
+#   value       = "postgresql://${var.db_admin_username}:${var.db_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.main.name}"
+#   sensitive   = true
+# }

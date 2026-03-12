@@ -161,46 +161,43 @@ resource "azurerm_storage_container" "static" {
   container_access_type = "blob"
 }
 
-# PostgreSQL Flexible Server (Base de données)
-resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = "${var.prefix}-postgresql"
-  resource_group_name    = azurerm_resource_group.main.name
-  location               = azurerm_resource_group.main.location
-  version                = "13"
-  administrator_login    = var.db_admin_username
-  administrator_password = var.db_admin_password
-  storage_mb             = 32768
-  sku_name               = "B_Standard_B1ms"
-  zone                   = "1"
-
-  tags = {
-    Environment = var.environment
-  }
-}
-
-# PostgreSQL Firewall Rule - Allow Azure Services
-resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
-  name             = "allow-azure-services"
-  server_id        = azurerm_postgresql_flexible_server.main.id
-  start_ip_address = "0.0.0.0"
-  end_ip_address   = "0.0.0.0"
-}
-
-# PostgreSQL Firewall Rule - Allow All (pour développement uniquement)
-resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_all" {
-  name             = "allow-all-ips"
-  server_id        = azurerm_postgresql_flexible_server.main.id
-  start_ip_address = "0.0.0.0"
-  end_ip_address   = "255.255.255.255"
-}
-
-# PostgreSQL Database
-resource "azurerm_postgresql_flexible_server_database" "main" {
-  name      = var.db_name
-  server_id = azurerm_postgresql_flexible_server.main.id
-  collation = "en_US.utf8"
-  charset   = "utf8"
-}
+# PostgreSQL désactivé (erreurs provider Azure)
+# resource "azurerm_postgresql_flexible_server" "main" {
+#   name                   = "${var.prefix}-postgresql"
+#   resource_group_name    = azurerm_resource_group.main.name
+#   location               = azurerm_resource_group.main.location
+#   version                = "13"
+#   administrator_login    = var.db_admin_username
+#   administrator_password = var.db_admin_password
+#   storage_mb             = 32768
+#   sku_name               = "B_Standard_B1ms"
+#   zone                   = "1"
+#
+#   tags = {
+#     Environment = var.environment
+#   }
+# }
+#
+# resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
+#   name             = "allow-azure-services"
+#   server_id        = azurerm_postgresql_flexible_server.main.id
+#   start_ip_address = "0.0.0.0"
+#   end_ip_address   = "0.0.0.0"
+# }
+#
+# resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_all" {
+#   name             = "allow-all-ips"
+#   server_id        = azurerm_postgresql_flexible_server.main.id
+#   start_ip_address = "0.0.0.0"
+#   end_ip_address   = "255.255.255.255"
+# }
+#
+# resource "azurerm_postgresql_flexible_server_database" "main" {
+#   name      = var.db_name
+#   server_id = azurerm_postgresql_flexible_server.main.id
+#   collation = "en_US.utf8"
+#   charset   = "utf8"
+# }
 
 # Virtual Machine
 resource "azurerm_linux_virtual_machine" "main" {
@@ -232,12 +229,8 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 
   custom_data = base64encode(templatefile("${path.module}/cloud-init.yaml", {
-    storage_account_name   = azurerm_storage_account.main.name
-    storage_account_key    = azurerm_storage_account.main.primary_access_key
-    db_host                = azurerm_postgresql_flexible_server.main.fqdn
-    db_name                = azurerm_postgresql_flexible_server_database.main.name
-    db_user                = var.db_admin_username
-    db_password            = var.db_admin_password
+    storage_account_name = azurerm_storage_account.main.name
+    storage_account_key  = azurerm_storage_account.main.primary_access_key
   }))
 
   tags = {

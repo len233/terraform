@@ -9,7 +9,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "The Azure region where resources will be created"
   type        = string
-  default     = "East US"
+  default     = "France Central"
 }
 
 variable "environment" {
@@ -45,7 +45,7 @@ variable "ssh_public_key_path" {
 variable "vm_size" {
   description = "Size of the Virtual Machine"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_B2s_v2"
 }
 
 variable "db_admin_username" {
