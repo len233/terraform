@@ -1,2 +1,0 @@
-# terraform
-projet tp terraform
