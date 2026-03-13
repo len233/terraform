@@ -1,77 +1,210 @@
-# Déploiement Automatisé d'Infrastructure Cloud avec Terraform
+# Projet Cloud Computing - Terraform Azure
+
+Déploiement automatisé d'une infrastructure cloud sur Azure avec Terraform.
 
 ## Description
 
-Déploiement automatisé d'une application Flask sur Azure avec Terraform.
-
-**Infrastructure déployée** :
-- Machine Virtuelle Ubuntu
-- Azure Blob Storage (images, logs, fichiers)
-- Base de données PostgreSQL
-- Application Flask avec API CRUD
+Ce projet déploie automatiquement sur Azure :
+- Une machine virtuelle Ubuntu 22.04 avec Flask
+- Un compte de stockage Azure Blob (3 containers)
+- Une base de données PostgreSQL
+- Un réseau virtuel avec sécurité (NSG)
 
 ## Prérequis
 
 - Terraform >= 1.0
 - Azure CLI
-- Clé SSH
+- Compte Azure avec droits de création de ressources
+- Clé SSH pour accès à la VM
+
+---
 
 ## Installation
 
-### 1. Se connecter à Azure
+### 1. Cloner le projet
+
+```bash
+git clone https://github.com/len233/terraform.git
+cd terraform/terraform
+```
+
+### 2. Se connecter à Azure
+
 ```bash
 az login
 ```
 
-### 2. Configurer les variables
-Éditez `terraform/terraform.tfvars` et modifiez :
-- `storage_account_name` (doit être unique!)
-- `db_admin_password`
+### 3. Configurer les variables
 
-### 3. Déployer
+Éditez `terraform.tfvars` et modifiez :
+
+```hcl
+storage_account_name = "votrestorageunique2026"  # Doit être unique !
+db_admin_password = "VotreMotDePasseSecure123!"
+```
+
+### 4. Déployer l'infrastructure
+
 ```bash
-cd terraform
+# Initialiser Terraform
 terraform init
+
+# Vérifier le plan
 terraform plan
-terraform apply
+
+# Déployer (durée : 10-15 minutes)
+terraform apply -auto-approve
 ```
 
-### 4. Accéder à l'application
-```bash
-terraform output vm_public_ip
-curl http://\<IP\>:5000
-```
+À la fin, Terraform affichera l'IP publique de votre VM.
 
-## Tests
+---
+
+## Utilisation
+
+### Récupérer l'IP de la VM
 
 ```bash
-# Récupérer l'IP
 VM_IP=$(terraform output -raw vm_public_ip)
+echo $VM_IP
+```
 
-# Tester l'API
+### Accéder à l'API
+
+```bash
+# Page d'accueil
 curl http://$VM_IP:5000
-curl http://$VM_IP:5000/health
 
-# Upload fichier
+# Vérifier la santé (database + storage)
+curl http://$VM_IP:5000/health
+```
+
+### Tests CRUD Utilisateurs
+
+```bash
+# Créer un utilisateur
+curl -X POST http://$VM_IP:5000/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","email":"alice@example.com"}'
+
+# Lire tous les utilisateurs
+curl http://$VM_IP:5000/users
+
+# Lire un utilisateur spécifique
+curl http://$VM_IP:5000/users/1
+
+# Supprimer un utilisateur
+curl -X DELETE http://$VM_IP:5000/users/1
+```
+
+### Upload de fichiers
+
+```bash
+# Upload un fichier
+echo "Test fichier" > test.txt
 curl -X POST -F "file=@test.txt" http://$VM_IP:5000/upload
 
-# Liste fichiers
+# Lister les fichiers
 curl http://$VM_IP:5000/files
+
+# Télécharger un fichier
+curl http://$VM_IP:5000/download/1 -o fichier.txt
 ```
 
-## API Endpoints
+---
 
-- `GET /` - Infos API
-- `GET /health` - Status
-- `POST /upload` - Upload fichier
-- `GET /files` - Liste fichiers
-- `GET /files/:id` - Détails fichier
-- `DELETE /files/:id` - Supprimer fichier
-- `POST /users` - Créer utilisateur
-- `GET /users` - Liste utilisateurs
+## Endpoints API
 
-## Suppression
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/` | Page d'accueil |
+| GET | `/health` | Status santé |
+| GET | `/users` | Liste utilisateurs |
+| POST | `/users` | Créer utilisateur |
+| GET | `/users/<id>` | Lire utilisateur |
+| DELETE | `/users/<id>` | Supprimer utilisateur |
+| POST | `/upload` | Upload fichier |
+| GET | `/files` | Liste fichiers |
+| GET | `/files/<id>` | Info fichier |
+| GET | `/download/<id>` | Télécharger fichier |
+| DELETE | `/files/<id>` | Supprimer fichier |
+
+---
+
+## Nettoyage
+
+Pour supprimer toute l'infrastructure :
 
 ```bash
-terraform destroy
+terraform destroy -auto-approve
 ```
+
+---
+
+## Structure du Projet
+
+```
+terraform/
+├── README.md                   # Documentation
+├── terraform/
+│   ├── main.tf                # Infrastructure principale
+│   ├── variables.tf           # Variables
+│   ├── outputs.tf             # Outputs
+│   ├── provider.tf            # Configuration Azure
+│   ├── terraform.tfvars       # Valeurs des variables
+│   └── cloud-init.yaml        # Script provisioning VM
+├── backend/
+│   ├── app.py                 # API Flask
+│   └── requirements.txt       # Dépendances Python
+└── scripts/
+    └── import-resources.sh    # Script import ressources
+```
+
+---
+
+## Ressources Déployées
+
+- 1 Resource Group
+- 1 Virtual Machine Ubuntu 22.04 (2 vCPUs, 4GB RAM)
+- 1 Virtual Network + Subnet
+- 1 IP Publique
+- 1 Network Security Group (ports 22, 80, 5000)
+- 1 Storage Account + 3 Containers (images, logs, static)
+- 1 PostgreSQL Flexible Server + Database
+- 2 Firewall Rules PostgreSQL
+
+**Total : 16 ressources Azure**
+
+---
+
+## Dépannage
+
+### VM inaccessible
+
+```bash
+# Attendre 2-3 minutes pour cloud-init
+# Vérifier le statut
+az vm get-instance-view \
+  --resource-group rg-terraform-cloud \
+  --name tfcloud-vm
+```
+
+### Base de données non connectée
+
+```bash
+# Vérifier les logs
+ssh azureuser@$VM_IP
+sudo journalctl -u flask-app.service -n 50
+```
+
+### Storage account déjà pris
+
+Changez le nom dans `terraform.tfvars` (doit être unique globalement).
+
+---
+
+## Auteur
+
+Fait par Hélène
+Projet Cloud Computing - Mars 2026  
+Repository : https://github.com/len233/terraform
