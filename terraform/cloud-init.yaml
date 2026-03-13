@@ -27,6 +27,10 @@ write_files:
       WorkingDirectory=/opt/flask-app
       Environment="AZURE_STORAGE_ACCOUNT=${storage_account_name}"
       Environment="AZURE_STORAGE_KEY=${storage_account_key}"
+      Environment="DB_HOST=${db_host}"
+      Environment="DB_NAME=${db_name}"
+      Environment="DB_USER=${db_user}"
+      Environment="DB_PASSWORD=${db_password}"
       ExecStart=/usr/bin/python3 /opt/flask-app/app.py
       Restart=always
       RestartSec=10
